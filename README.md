@@ -6,7 +6,7 @@ Visualization is done via output [PPM images](http://netpbm.sourceforge.net/doc/
 
 ## Quick Start
 
-'''console
+```console
 $ make
 $ ./mcv
-'''
+```
