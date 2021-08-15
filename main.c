@@ -149,9 +149,9 @@ int
 main()
 {
     static RGB pixels[NUM_PIXELS];
-    RGB honeydew = *(RGB *) &(int){HONEYDEW};
-    RGB indigo = *(RGB *) &(int){INDIGO};
-    RGB black = *(RGB *) &(int){BLACK};
+    RGB honeydew = *(RGB *) &(uint32_t){HONEYDEW};
+    RGB indigo = *(RGB *) &(uint32_t){INDIGO};
+    RGB black = *(RGB *) &(uint32_t){BLACK};
 
     stripes_pattern(pixels, WIDTH, HEIGHT, TILE_SIZE, honeydew, indigo);
     save_as_ppm("stripes.ppm", pixels, WIDTH, HEIGHT);
