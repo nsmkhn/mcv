@@ -7,12 +7,21 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define HEIGHT 16
-#define WIDTH 16
+#define HEIGHT 512
+#define WIDTH 512
+#define NUM_PIXELS (WIDTH)*(HEIGHT)
 #define BLACK 0x000000
-#define MAGENTA 0xFF00FF
-#define GREEN 0x00FF00
+#define INDIGO 0x4B0082
+#define HONEYDEW 0xF0FFF0
 #define TILE_SIZE 8
+#define RADIUS (WIDTH)/3
+
+typedef struct
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} RGB;
 
 void
 reset_pixels(uint32_t *pixels, size_t num_pixels, uint32_t color)
@@ -22,7 +31,9 @@ reset_pixels(uint32_t *pixels, size_t num_pixels, uint32_t color)
 }
 
 void
-save_as_ppm(char *filepath, uint32_t *pixels, size_t width, size_t height)
+save_as_ppm(char *filepath,
+            uint32_t *pixels, size_t width, size_t height,
+            RGB *colors)
 {
     FILE *file;
     if((file = fopen(filepath, "w")) == NULL)
@@ -31,20 +42,23 @@ save_as_ppm(char *filepath, uint32_t *pixels, size_t width, size_t height)
         exit(EXIT_FAILURE);
     }
 
-    uint8_t colors[width*height*3], *pcolors = colors;
+    RGB *pcolors = colors;
     fprintf(file, "P6\n%zu %zu 255\n", width, height);
     for(size_t y = 0; y < height; ++y)
     {
         for(size_t x = 0; x < width; ++x)
         {
             uint32_t pixel = pixels[y * width + x];
-            *pcolors++ = (pixel >> 8 * 2) & 0xFF;
-            *pcolors++ = (pixel >> 8 * 1) & 0xFF;
-            *pcolors++ = (pixel >> 8 * 0) & 0xFF;
+            *pcolors++ = (RGB)
+            {
+                .r = (pixel >> 8 * 2) & 0xFF,
+                .g = (pixel >> 8 * 1) & 0xFF,
+                .b = (pixel >> 8 * 0) & 0xFF
+            };
         }
     }
 
-    fwrite(colors, sizeof(uint8_t), sizeof(colors), file);
+    fwrite(colors, sizeof(RGB), width*height, file);
     if(fclose(file) == EOF)
     {
         fprintf(stderr, "Failed to close file %s: %s", filepath, strerror(errno));
@@ -120,14 +134,14 @@ hollow_circle_pattern(uint32_t *pixels,
                       uint32_t color)
 {
     assert(width == height);
-    int32_t w = width, h = height;
-    int32_t r = radius;
-    int32_t x = 0, y = r;
-    int32_t cx = w / 2, cy = h / 2;
+    float w = width, h = height;
+    float r = radius;
+    float x = 0.0f, y = r - 0.5;
+    float cx = w / 2, cy = h / 2;
     while(x <= y)
     {
-        int32_t px = x + cx;
-        int32_t py = y + cy;
+        size_t px = x + cx;
+        size_t py = y + cy;
 
         pixels[py * width + px] = color;
         pixels[px * width + py] = color;
@@ -141,32 +155,32 @@ hollow_circle_pattern(uint32_t *pixels,
         pixels[(width - px) * width + (height - py)] = color;
         pixels[(height - py) * width + (width - px)] = color;
 
-        ++x;
+        x += 1.0f;
         if(x*x + y*y > r*r)
-            --y;
+            y -= 1.0f;
     }
 }
 
 int
 main()
 {
-    uint32_t pixels[WIDTH*HEIGHT] = {0};
+    static uint32_t pixels[NUM_PIXELS];
+    static RGB colors[NUM_PIXELS];
 
-    stripes_pattern(pixels, WIDTH, HEIGHT, TILE_SIZE, BLACK, MAGENTA);
-    save_as_ppm("stripes.ppm", pixels, WIDTH, HEIGHT);
+    stripes_pattern(pixels, WIDTH, HEIGHT, TILE_SIZE, HONEYDEW, INDIGO);
+    save_as_ppm("stripes.ppm", pixels, WIDTH, HEIGHT, colors);
 
     reset_pixels(pixels, WIDTH*HEIGHT, BLACK);
-    checker_pattern(pixels, WIDTH, HEIGHT, TILE_SIZE, BLACK, MAGENTA);
-    save_as_ppm("checker.ppm", pixels, WIDTH, HEIGHT);
+    checker_pattern(pixels, WIDTH, HEIGHT, TILE_SIZE, HONEYDEW, INDIGO);
+    save_as_ppm("checker.ppm", pixels, WIDTH, HEIGHT, colors);
 
-    size_t radius = WIDTH/2;
     reset_pixels(pixels, WIDTH*HEIGHT, BLACK);
-    solid_circle_pattern(pixels, WIDTH, HEIGHT, radius, BLACK, MAGENTA);
-    save_as_ppm("solid_circle.ppm", pixels, WIDTH, HEIGHT);
+    solid_circle_pattern(pixels, WIDTH, HEIGHT, RADIUS, HONEYDEW, INDIGO);
+    save_as_ppm("solid_circle.ppm", pixels, WIDTH, HEIGHT, colors);
 
-    reset_pixels(pixels, WIDTH*HEIGHT, GREEN);
-    hollow_circle_pattern(pixels, WIDTH, HEIGHT, radius, MAGENTA);
-    save_as_ppm("hollow_circle.ppm", pixels, WIDTH, HEIGHT);
+    reset_pixels(pixels, WIDTH*HEIGHT, HONEYDEW);
+    hollow_circle_pattern(pixels, WIDTH, HEIGHT, RADIUS, INDIGO);
+    save_as_ppm("hollow_circle.ppm", pixels, WIDTH, HEIGHT, colors);
 
     return 0;
 }
