@@ -9,5 +9,5 @@ $ make
 $ ./mcv
 ```
 
-## Screenshots
+## Result
 ![solid_circle](sc/solid_circle.png) ![hollow_circle](sc/hollow_circle.png)
